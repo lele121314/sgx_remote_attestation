@@ -1,6 +1,6 @@
 # sgx_remote_attestation
 
-使用windows 需要安装SDK
+使用windows 需要安装SDK 两端的通讯基于share memory
 
 先启动 server： \server\x64\Simulation\isv_app.exe
 
