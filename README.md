@@ -1,7 +1,7 @@
 # sgx_remote_attestation
 
-Ê¹ÓÃwindows
+ä½¿ç”¨windows éœ€è¦å®‰è£…SDK
 
- ÏÈÆô¶¯server£º\server\x64\Simulation\isv_app.exe
+å…ˆå¯åŠ¨ serverï¼š \server\x64\Simulation\isv_app.exe
 
- ÏÈÆô¶¯client£º\client\x64\Simulation\isv_app.exe
+åå¯åŠ¨ clientï¼š\client\x64\Simulation\isv_app.exe
