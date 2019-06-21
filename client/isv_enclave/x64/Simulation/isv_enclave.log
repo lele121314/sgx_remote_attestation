@@ -1,0 +1,20 @@
+﻿  Creating proxy/bridge routines
+  isv_enclave.cpp
+  Default key derivation function is used.
+  isv_enclave_t.c
+    正在创建库 C:\Users\xl\Desktop\sgx\client\x64\Simulation\isv_enclave.lib 和对象 C:\Users\xl\Desktop\sgx\client\x64\Simulation\isv_enclave.exp
+  isv_enclave.vcxproj -> C:\Users\xl\Desktop\sgx\client\x64\Simulation\isv_enclave.dll
+  isv_enclave.vcxproj -> C:\Users\xl\Desktop\sgx\client\x64\Simulation\isv_enclave.pdb (Full PDB)
+  The required memory is 0x1ee000.
+  Succeed.
+  <EnclaveConfiguration>
+      <ProdID>0</ProdID>
+      <ISVSVN>0</ISVSVN>
+      <StackMaxSize>0x40000</StackMaxSize>
+      <HeapMaxSize>0x100000</HeapMaxSize>
+      <TCSNum>1</TCSNum>
+      <TCSPolicy>1</TCSPolicy>
+      <DisableDebug>0</DisableDebug>
+      <MiscSelect>0</MiscSelect>
+      <MiscMask>0xFFFFFFFF</MiscMask>
+  </EnclaveConfiguration>
