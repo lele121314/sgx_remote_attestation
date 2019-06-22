@@ -28,6 +28,8 @@
 #include "sgx_tkey_exchange.h"
 #include "sgx_tcrypto.h"
 #include "string.h"
+#include "malloc.h"
+
 #ifdef _MSC_VER
 #pragma warning(push)
 #pragma warning ( disable:4127 )
@@ -393,6 +395,105 @@ sgx_status_t put_secret_data(
     return ret;
 }
 
+
+
+
+
+/** Create RSA key pair with <n_byte_size> key size and <e_byte_size> public exponent.
+*
+* Parameters:
+*   Return: sgx_status_t  - SGX_SUCCESS or failure as defined in sgx_error.h
+*   Inputs: p_e [In/Out] Pointer to the public exponent e.
+*           n_byte_size [In] Size in bytes of the key modulus.
+*           e_byte_size	[In] Size in bytes of the key public exponent.
+*   Output: p_*			[Out] Pointer to the matching key parameter/factor buffer.
+*
+sgx_status_t sgx_create_rsa_key_pair(int n_byte_size, int e_byte_size, unsigned char *p_n, unsigned char *p_d, unsigned char *p_e,
+	unsigned char *p_p, unsigned char *p_q, unsigned char *p_dmp1,
+	unsigned char *p_dmq1, unsigned char *p_iqmp);*/
+
+sgx_rsa3072_key_t pri_key;
+sgx_status_t rsa_public_key_gen(
+	sgx_rsa3072_public_key_t *pub_key
+	)
+{
+	sgx_status_t ret = SGX_SUCCESS;
+	int n_byte_size = SGX_RSA3072_KEY_SIZE;
+	int e_byte_size = SGX_RSA3072_PUB_EXP_SIZE;
+	unsigned char *p_n;
+	unsigned char *p_d;
+	
+	unsigned char *p_p; 
+	unsigned char *p_q;
+	unsigned char *p_dmp1;
+	unsigned char *p_dmq1; 
+	unsigned char *p_iqmp;
+	p_n = (unsigned char*)malloc(n_byte_size);
+	p_d = (unsigned char*)malloc(n_byte_size);
+	uint8_t e[] = { 0x01,0x00,0x01,0x00 };
+	p_p = (unsigned char*)malloc(n_byte_size);
+	p_q = (unsigned char*)malloc(n_byte_size);
+	p_dmp1 = (unsigned char*)malloc(n_byte_size);
+	p_dmq1 = (unsigned char*)malloc(n_byte_size);
+	p_iqmp = (unsigned char*)malloc(n_byte_size);
+	ret = sgx_create_rsa_key_pair(n_byte_size, 
+								  e_byte_size,
+									p_n,
+								  p_d,
+									e,
+								  p_p,
+								  p_q,
+								  p_dmp1,
+								  p_dmq1, 
+								  p_iqmp);
+
+	memcpy(pri_key.d, p_d, n_byte_size);
+	memcpy(pri_key.e, e, e_byte_size);
+	memcpy(pri_key.mod, p_n, n_byte_size);
+	memcpy(pub_key->exp,  e, e_byte_size);
+	memcpy(pub_key->mod, p_n, n_byte_size);
+
+	
+	free(p_n);
+	free(p_d);
+	free(p_p);
+	free(p_q);
+	free(p_dmp1);
+	free(p_dmq1);
+	free(p_iqmp);
+
+	return ret;
+}
+
+sgx_status_t rsa_verify(const uint8_t *p_data,
+						uint32_t data_size,
+						sgx_rsa3072_signature_t *p_signature,
+						sgx_rsa_result_t *p_result,
+						const sgx_rsa3072_public_key_t *p_public
+	)
+{
+	sgx_status_t ret = SGX_SUCCESS;
+	ret = sgx_rsa3072_verify(p_data,
+		data_size,
+		p_public,
+		p_signature,
+		p_result);
+	return ret;
+}
+
+sgx_status_t rsa_sign(const uint8_t *p_data,
+					  uint32_t data_size,
+					  sgx_rsa3072_signature_t *p_signature
+	)
+{
+	sgx_status_t ret = SGX_SUCCESS;
+	ret = sgx_rsa3072_sign(p_data,
+		data_size,
+		&pri_key,
+		p_signature);
+
+	return ret;
+}
 #ifdef _MSC_VER
     #pragma warning(pop)
 #endif

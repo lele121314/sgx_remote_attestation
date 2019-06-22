@@ -198,8 +198,10 @@ void share_send(char * send)
 		exit(1);
 	}
 	CopyMemory((PVOID)buff, send, 4096); // Ð´ÈëÊý¾Ý 
-	char str1[2] = "0";
-	strcpy((char*)controlbuff, str1);
+
+
+	strcpy((char*)controlbuff, "0");
+	
 }
 
 void share_receive()
@@ -643,103 +645,139 @@ int main(int argc, char* argv[])
                 if(ATTESTATION_MSG_BODY_SIZE != p_att_result_msg_full->size ||
                     memcmp(p_att_result_msg_full->body,
                         attestation_msg_samples[GET_VERIFICATION_ARRAY_INDEX()],
-                        p_att_result_msg_full->size) )
-                {
-                    fprintf(OUTPUT, "\nSent MSG3 successfully. Received an "
-                                    "attestation result message back that did "
-                                    "NOT match the expected value.\n");
-                    fprintf(OUTPUT, "\nEXPECTED ATTESTATION RESULT -");
-                    PRINT_BYTE_ARRAY(OUTPUT,
-                        attestation_msg_samples[GET_VERIFICATION_ARRAY_INDEX()],
-                        ATTESTATION_MSG_BODY_SIZE);
-                }
-            }
-        }
+p_att_result_msg_full->size) )
+				{
+				fprintf(OUTPUT, "\nSent MSG3 successfully. Received an "
+					"attestation result message back that did "
+					"NOT match the expected value.\n");
+				fprintf(OUTPUT, "\nEXPECTED ATTESTATION RESULT -");
+				PRINT_BYTE_ARRAY(OUTPUT,
+					attestation_msg_samples[GET_VERIFICATION_ARRAY_INDEX()],
+					ATTESTATION_MSG_BODY_SIZE);
+				}
+			}
+		}
 
-        fprintf(OUTPUT, "\nATTESTATION RESULT RECEIVED - ");
-        PRINT_BYTE_ARRAY(OUTPUT, p_att_result_msg_full->body,
-                         p_att_result_msg_full->size);
+		fprintf(OUTPUT, "\nATTESTATION RESULT RECEIVED - ");
+		PRINT_BYTE_ARRAY(OUTPUT, p_att_result_msg_full->body,
+			p_att_result_msg_full->size);
 
 
-        if( VERIFICATION_INDEX_IS_VALID() )
-        {
-            fprintf(OUTPUT, "\nBecause we used precomputed values for the "
-                            "messages, the attestation result message will "
-                            "not pass further verification tests, so we will "
-                            "skip them.\n");
-            goto CLEANUP;
-        }
+		if (VERIFICATION_INDEX_IS_VALID())
+		{
+			fprintf(OUTPUT, "\nBecause we used precomputed values for the "
+				"messages, the attestation result message will "
+				"not pass further verification tests, so we will "
+				"skip them.\n");
+			goto CLEANUP;
+		}
 
-        // Check the MAC using MK on the attestation result message.
-        // The format of the attestation result message is ISV specific.
-        // This is a simple form for demonstration. In a real product,
-        // the ISV may want to communicate more information.
-        ret = verify_att_result_mac(enclave_id,
-                &status,
-                context,
-                (uint8_t*)&p_att_result_msg_body->platform_info_blob,
-                sizeof(ias_platform_info_blob_t),
-                (uint8_t*)&p_att_result_msg_body->mac,
-                sizeof(sgx_mac_t));
-        if((SGX_SUCCESS != ret) ||
-           (SGX_SUCCESS != status))
-        {
-            ret = -1;
-            fprintf(OUTPUT, "\nError: INTEGRITY FAILED - attestation result "
-                            "message MK based cmac failed in [%s].",
-                            __FUNCTION__);
-            goto CLEANUP;
-        }
+		// Check the MAC using MK on the attestation result message.
+		// The format of the attestation result message is ISV specific.
+		// This is a simple form for demonstration. In a real product,
+		// the ISV may want to communicate more information.
+		ret = verify_att_result_mac(enclave_id,
+			&status,
+			context,
+			(uint8_t*)&p_att_result_msg_body->platform_info_blob,
+			sizeof(ias_platform_info_blob_t),
+			(uint8_t*)&p_att_result_msg_body->mac,
+			sizeof(sgx_mac_t));
+		if ((SGX_SUCCESS != ret) ||
+			(SGX_SUCCESS != status))
+		{
+			ret = -1;
+			fprintf(OUTPUT, "\nError: INTEGRITY FAILED - attestation result "
+				"message MK based cmac failed in [%s].",
+				__FUNCTION__);
+			goto CLEANUP;
+		}
 
-        bool attestation_passed = true;
-        // Check the attestation result for pass or fail.
-        // Whether attestation passes or fails is a decision made by the ISV Server.
-        // When the ISV server decides to trust the enclave, then it will return success.
-        // When the ISV server decided to not trust the enclave, then it will return failure.
-        if(0 != p_att_result_msg_full->status[0]
-           || 0 != p_att_result_msg_full->status[1])
-        {
-            fprintf(OUTPUT, "\nError, attestation result message MK based cmac "
-                            "failed in [%s].", __FUNCTION__);
-            attestation_passed = false;
-        }
+		bool attestation_passed = true;
+		// Check the attestation result for pass or fail.
+		// Whether attestation passes or fails is a decision made by the ISV Server.
+		// When the ISV server decides to trust the enclave, then it will return success.
+		// When the ISV server decided to not trust the enclave, then it will return failure.
+		if (0 != p_att_result_msg_full->status[0]
+			|| 0 != p_att_result_msg_full->status[1])
+		{
+			fprintf(OUTPUT, "\nError, attestation result message MK based cmac "
+				"failed in [%s].", __FUNCTION__);
+			attestation_passed = false;
+		}
 
-        // The attestation result message should contain a field for the Platform
-        // Info Blob (PIB).  The PIB is returned by the IAS in the attestation report.
-        // It is not returned in all cases, but when it is, the ISV app
-        // should pass it to the blob analysis API called sgx_report_attestation_status()
-        // along with the trust decision from the ISV server.
-        // The ISV application will take action based on the update_info.
-        // returned in update_info by the API.  
-        // This call is stubbed out for the sample.
-        // 
-        // sgx_update_info_bit_t update_info;
-        // ret = sgx_report_attestation_status(
-        //     &p_att_result_msg_body->platform_info_blob,
-        //     attestation_passed ? 0 : 1, &update_info);
+		// The attestation result message should contain a field for the Platform
+		// Info Blob (PIB).  The PIB is returned by the IAS in the attestation report.
+		// It is not returned in all cases, but when it is, the ISV app
+		// should pass it to the blob analysis API called sgx_report_attestation_status()
+		// along with the trust decision from the ISV server.
+		// The ISV application will take action based on the update_info.
+		// returned in update_info by the API.  
+		// This call is stubbed out for the sample.
+		// 
+		// sgx_update_info_bit_t update_info;
+		// ret = sgx_report_attestation_status(
+		//     &p_att_result_msg_body->platform_info_blob,
+		//     attestation_passed ? 0 : 1, &update_info);
 
-        // Get the shared secret sent by the server using SK (if attestation
-        // passed)
-        if(attestation_passed)
-        {
-            ret = put_secret_data(enclave_id,
-                                  &status,
-                                  context,
-                                  p_att_result_msg_body->secret.payload,
-                                  p_att_result_msg_body->secret.payload_size,
-                                  p_att_result_msg_body->secret.payload_tag);
-            if((SGX_SUCCESS != ret)  || (SGX_SUCCESS != status))
-            {
-                fprintf(OUTPUT, "\nError, attestation result message secret "
-                                "using SK based AESGCM failed in [%s]. ret = "
-                                "0x%0x. status = 0x%0x", __FUNCTION__, ret,
-                                 status);
-                goto CLEANUP;
-            }
-        }
-        fprintf(OUTPUT, "\nSecret successfully received from server.");
-        fprintf(OUTPUT, "\nRemote attestation success!");
-    }
+		// Get the shared secret sent by the server using SK (if attestation
+		// passed)
+		if (attestation_passed)
+		{
+			ret = put_secret_data(enclave_id,
+				&status,
+				context,
+				p_att_result_msg_body->secret.payload,
+				p_att_result_msg_body->secret.payload_size,
+				p_att_result_msg_body->secret.payload_tag);
+			if ((SGX_SUCCESS != ret) || (SGX_SUCCESS != status))
+			{
+				fprintf(OUTPUT, "\nError, attestation result message secret "
+					"using SK based AESGCM failed in [%s]. ret = "
+					"0x%0x. status = 0x%0x", __FUNCTION__, ret,
+					status);
+				goto CLEANUP;
+			}
+		}
+		fprintf(OUTPUT, "\nSecret successfully received from server.");
+		fprintf(OUTPUT, "\nRemote attestation success!");
+	}
+
+
+	//start
+	{
+		sgx_rsa3072_public_key_t *pub_key;
+		pub_key = (sgx_rsa3072_public_key_t*)malloc(sizeof(sgx_rsa3072_public_key_t));
+		
+		share_send((char *)p_msg3_full);
+		share_receive();
+		memcpy(pub_key, buff, sizeof(sgx_rsa3072_public_key_t));
+		for (int i = 0; i < 5; i++) {
+		printf("0x%02x\n", *((uint8_t*)pub_key + i));
+		}
+		share_send((char *)p_msg3_full);
+		share_receive();
+		sgx_rsa3072_signature_t *p_signature;
+		p_signature = (sgx_rsa3072_signature_t*)malloc(sizeof(sgx_rsa3072_signature_t));
+		memcpy(p_signature, buff, sizeof(sgx_rsa3072_signature_t));
+
+		sgx_rsa_result_t p_result;
+		char data[12] = "hello world";
+		ret = rsa_verify(enclave_id,
+			&status,
+			(uint8_t*)&data,
+			sizeof(char) * 12,
+			p_signature,
+			&p_result,
+			pub_key
+		);
+		if (p_result == SGX_RSA_VALID)fprintf(OUTPUT, "\nRSA GOOD!!!.");
+		else fprintf(OUTPUT, "\n33333Error, attestation result message secret "
+			"using SK based AESGCM failed in [%s]. ret = "
+			"0x%0x. status = 0x%0x", __FUNCTION__, ret,
+			p_result);
+		
+	}
 
 CLEANUP:
     // Clean-up

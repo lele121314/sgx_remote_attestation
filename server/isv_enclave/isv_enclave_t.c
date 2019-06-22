@@ -55,6 +55,27 @@ typedef struct ms_put_secret_data_t {
 	uint8_t* ms_gcm_mac;
 } ms_put_secret_data_t;
 
+typedef struct ms_rsa_public_key_gen_t {
+	sgx_status_t ms_retval;
+	sgx_rsa3072_public_key_t* ms_pub_key;
+} ms_rsa_public_key_gen_t;
+
+typedef struct ms_rsa_verify_t {
+	sgx_status_t ms_retval;
+	const uint8_t* ms_p_data;
+	uint32_t ms_data_size;
+	sgx_rsa3072_signature_t* ms_p_signature;
+	sgx_rsa_result_t* ms_p_result;
+	const sgx_rsa3072_public_key_t* ms_p_public;
+} ms_rsa_verify_t;
+
+typedef struct ms_rsa_sign_t {
+	sgx_status_t ms_retval;
+	const uint8_t* ms_p_data;
+	uint32_t ms_data_size;
+	sgx_rsa3072_signature_t* ms_p_signature;
+} ms_rsa_sign_t;
+
 typedef struct ms_sgx_ra_get_ga_t {
 	sgx_status_t ms_retval;
 	sgx_ra_context_t ms_context;
@@ -352,6 +373,227 @@ err:
 	return status;
 }
 
+static sgx_status_t SGX_CDECL sgx_rsa_public_key_gen(void* pms)
+{
+	CHECK_REF_POINTER(pms, sizeof(ms_rsa_public_key_gen_t));
+	//
+	// fence after pointer checks
+	//
+	sgx_lfence();
+	ms_rsa_public_key_gen_t* ms = SGX_CAST(ms_rsa_public_key_gen_t*, pms);
+	sgx_status_t status = SGX_SUCCESS;
+	sgx_rsa3072_public_key_t* _tmp_pub_key = ms->ms_pub_key;
+	size_t _len_pub_key = 388;
+	sgx_rsa3072_public_key_t* _in_pub_key = NULL;
+
+	CHECK_UNIQUE_POINTER(_tmp_pub_key, _len_pub_key);
+
+	//
+	// fence after pointer checks
+	//
+	sgx_lfence();
+
+	if (_tmp_pub_key != NULL && _len_pub_key != 0) {
+		if ((_in_pub_key = (sgx_rsa3072_public_key_t*)malloc(_len_pub_key)) == NULL) {
+			status = SGX_ERROR_OUT_OF_MEMORY;
+			goto err;
+		}
+
+		memset((void*)_in_pub_key, 0, _len_pub_key);
+	}
+
+	ms->ms_retval = rsa_public_key_gen(_in_pub_key);
+	if (_in_pub_key) {
+		if (memcpy_s(_tmp_pub_key, _len_pub_key, _in_pub_key, _len_pub_key)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+	}
+
+err:
+	if (_in_pub_key) free(_in_pub_key);
+	return status;
+}
+
+static sgx_status_t SGX_CDECL sgx_rsa_verify(void* pms)
+{
+	CHECK_REF_POINTER(pms, sizeof(ms_rsa_verify_t));
+	//
+	// fence after pointer checks
+	//
+	sgx_lfence();
+	ms_rsa_verify_t* ms = SGX_CAST(ms_rsa_verify_t*, pms);
+	sgx_status_t status = SGX_SUCCESS;
+	const uint8_t* _tmp_p_data = ms->ms_p_data;
+	uint32_t _tmp_data_size = ms->ms_data_size;
+	size_t _len_p_data = _tmp_data_size;
+	uint8_t* _in_p_data = NULL;
+	sgx_rsa3072_signature_t* _tmp_p_signature = ms->ms_p_signature;
+	size_t _len_p_signature = 384;
+	sgx_rsa3072_signature_t* _in_p_signature = NULL;
+	sgx_rsa_result_t* _tmp_p_result = ms->ms_p_result;
+	size_t _len_p_result = 4;
+	sgx_rsa_result_t* _in_p_result = NULL;
+	const sgx_rsa3072_public_key_t* _tmp_p_public = ms->ms_p_public;
+	size_t _len_p_public = 388;
+	sgx_rsa3072_public_key_t* _in_p_public = NULL;
+
+	CHECK_UNIQUE_POINTER(_tmp_p_data, _len_p_data);
+	CHECK_UNIQUE_POINTER(_tmp_p_signature, _len_p_signature);
+	CHECK_UNIQUE_POINTER(_tmp_p_result, _len_p_result);
+	CHECK_UNIQUE_POINTER(_tmp_p_public, _len_p_public);
+
+	//
+	// fence after pointer checks
+	//
+	sgx_lfence();
+
+	if (_tmp_p_data != NULL && _len_p_data != 0) {
+		if ( _len_p_data % sizeof(*_tmp_p_data) != 0)
+		{
+			status = SGX_ERROR_INVALID_PARAMETER;
+			goto err;
+		}
+		_in_p_data = (uint8_t*)malloc(_len_p_data);
+		if (_in_p_data == NULL) {
+			status = SGX_ERROR_OUT_OF_MEMORY;
+			goto err;
+		}
+
+		if (memcpy_s(_in_p_data, _len_p_data, _tmp_p_data, _len_p_data)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+
+	}
+	if (_tmp_p_signature != NULL && _len_p_signature != 0) {
+		_in_p_signature = (sgx_rsa3072_signature_t*)malloc(_len_p_signature);
+		if (_in_p_signature == NULL) {
+			status = SGX_ERROR_OUT_OF_MEMORY;
+			goto err;
+		}
+
+		if (memcpy_s(_in_p_signature, _len_p_signature, _tmp_p_signature, _len_p_signature)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+
+	}
+	if (_tmp_p_result != NULL && _len_p_result != 0) {
+		_in_p_result = (sgx_rsa_result_t*)malloc(_len_p_result);
+		if (_in_p_result == NULL) {
+			status = SGX_ERROR_OUT_OF_MEMORY;
+			goto err;
+		}
+
+		if (memcpy_s(_in_p_result, _len_p_result, _tmp_p_result, _len_p_result)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+
+	}
+	if (_tmp_p_public != NULL && _len_p_public != 0) {
+		_in_p_public = (sgx_rsa3072_public_key_t*)malloc(_len_p_public);
+		if (_in_p_public == NULL) {
+			status = SGX_ERROR_OUT_OF_MEMORY;
+			goto err;
+		}
+
+		if (memcpy_s(_in_p_public, _len_p_public, _tmp_p_public, _len_p_public)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+
+	}
+
+	ms->ms_retval = rsa_verify((const uint8_t*)_in_p_data, _tmp_data_size, _in_p_signature, _in_p_result, (const sgx_rsa3072_public_key_t*)_in_p_public);
+	if (_in_p_signature) {
+		if (memcpy_s(_tmp_p_signature, _len_p_signature, _in_p_signature, _len_p_signature)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+	}
+	if (_in_p_result) {
+		if (memcpy_s(_tmp_p_result, _len_p_result, _in_p_result, _len_p_result)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+	}
+
+err:
+	if (_in_p_data) free(_in_p_data);
+	if (_in_p_signature) free(_in_p_signature);
+	if (_in_p_result) free(_in_p_result);
+	if (_in_p_public) free(_in_p_public);
+	return status;
+}
+
+static sgx_status_t SGX_CDECL sgx_rsa_sign(void* pms)
+{
+	CHECK_REF_POINTER(pms, sizeof(ms_rsa_sign_t));
+	//
+	// fence after pointer checks
+	//
+	sgx_lfence();
+	ms_rsa_sign_t* ms = SGX_CAST(ms_rsa_sign_t*, pms);
+	sgx_status_t status = SGX_SUCCESS;
+	const uint8_t* _tmp_p_data = ms->ms_p_data;
+	uint32_t _tmp_data_size = ms->ms_data_size;
+	size_t _len_p_data = _tmp_data_size;
+	uint8_t* _in_p_data = NULL;
+	sgx_rsa3072_signature_t* _tmp_p_signature = ms->ms_p_signature;
+	size_t _len_p_signature = 384;
+	sgx_rsa3072_signature_t* _in_p_signature = NULL;
+
+	CHECK_UNIQUE_POINTER(_tmp_p_data, _len_p_data);
+	CHECK_UNIQUE_POINTER(_tmp_p_signature, _len_p_signature);
+
+	//
+	// fence after pointer checks
+	//
+	sgx_lfence();
+
+	if (_tmp_p_data != NULL && _len_p_data != 0) {
+		if ( _len_p_data % sizeof(*_tmp_p_data) != 0)
+		{
+			status = SGX_ERROR_INVALID_PARAMETER;
+			goto err;
+		}
+		_in_p_data = (uint8_t*)malloc(_len_p_data);
+		if (_in_p_data == NULL) {
+			status = SGX_ERROR_OUT_OF_MEMORY;
+			goto err;
+		}
+
+		if (memcpy_s(_in_p_data, _len_p_data, _tmp_p_data, _len_p_data)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+
+	}
+	if (_tmp_p_signature != NULL && _len_p_signature != 0) {
+		if ((_in_p_signature = (sgx_rsa3072_signature_t*)malloc(_len_p_signature)) == NULL) {
+			status = SGX_ERROR_OUT_OF_MEMORY;
+			goto err;
+		}
+
+		memset((void*)_in_p_signature, 0, _len_p_signature);
+	}
+
+	ms->ms_retval = rsa_sign((const uint8_t*)_in_p_data, _tmp_data_size, _in_p_signature);
+	if (_in_p_signature) {
+		if (memcpy_s(_tmp_p_signature, _len_p_signature, _in_p_signature, _len_p_signature)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+	}
+
+err:
+	if (_in_p_data) free(_in_p_data);
+	if (_in_p_signature) free(_in_p_signature);
+	return status;
+}
+
 static sgx_status_t SGX_CDECL sgx_sgx_ra_get_ga(void* pms)
 {
 	CHECK_REF_POINTER(pms, sizeof(ms_sgx_ra_get_ga_t));
@@ -535,14 +777,17 @@ err:
 
 SGX_EXTERNC const struct {
 	size_t nr_ecall;
-	struct {void* call_addr; uint8_t is_priv;} ecall_table[7];
+	struct {void* call_addr; uint8_t is_priv;} ecall_table[10];
 } g_ecall_table = {
-	7,
+	10,
 	{
 		{(void*)(uintptr_t)sgx_enclave_init_ra, 0},
 		{(void*)(uintptr_t)sgx_enclave_ra_close, 0},
 		{(void*)(uintptr_t)sgx_verify_att_result_mac, 0},
 		{(void*)(uintptr_t)sgx_put_secret_data, 0},
+		{(void*)(uintptr_t)sgx_rsa_public_key_gen, 0},
+		{(void*)(uintptr_t)sgx_rsa_verify, 0},
+		{(void*)(uintptr_t)sgx_rsa_sign, 0},
 		{(void*)(uintptr_t)sgx_sgx_ra_get_ga, 0},
 		{(void*)(uintptr_t)sgx_sgx_ra_proc_msg2_trusted, 0},
 		{(void*)(uintptr_t)sgx_sgx_ra_get_msg3_trusted, 0},
@@ -551,19 +796,19 @@ SGX_EXTERNC const struct {
 
 SGX_EXTERNC const struct {
 	size_t nr_ocall;
-	uint8_t entry_table[9][7];
+	uint8_t entry_table[9][10];
 } g_dyn_entry_table = {
 	9,
 	{
-		{0, 0, 0, 0, 0, 0, 0, },
-		{0, 0, 0, 0, 0, 0, 0, },
-		{0, 0, 0, 0, 0, 0, 0, },
-		{0, 0, 0, 0, 0, 0, 0, },
-		{0, 0, 0, 0, 0, 0, 0, },
-		{0, 0, 0, 0, 0, 0, 0, },
-		{0, 0, 0, 0, 0, 0, 0, },
-		{0, 0, 0, 0, 0, 0, 0, },
-		{0, 0, 0, 0, 0, 0, 0, },
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
 	}
 };
 

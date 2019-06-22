@@ -29,6 +29,27 @@ typedef struct ms_put_secret_data_t {
 	uint8_t* ms_gcm_mac;
 } ms_put_secret_data_t;
 
+typedef struct ms_rsa_public_key_gen_t {
+	sgx_status_t ms_retval;
+	sgx_rsa3072_public_key_t* ms_pub_key;
+} ms_rsa_public_key_gen_t;
+
+typedef struct ms_rsa_verify_t {
+	sgx_status_t ms_retval;
+	const uint8_t* ms_p_data;
+	uint32_t ms_data_size;
+	sgx_rsa3072_signature_t* ms_p_signature;
+	sgx_rsa_result_t* ms_p_result;
+	const sgx_rsa3072_public_key_t* ms_p_public;
+} ms_rsa_verify_t;
+
+typedef struct ms_rsa_sign_t {
+	sgx_status_t ms_retval;
+	const uint8_t* ms_p_data;
+	uint32_t ms_data_size;
+	sgx_rsa3072_signature_t* ms_p_signature;
+} ms_rsa_sign_t;
+
 typedef struct ms_sgx_ra_get_ga_t {
 	sgx_status_t ms_retval;
 	sgx_ra_context_t ms_context;
@@ -252,13 +273,49 @@ sgx_status_t put_secret_data(sgx_enclave_id_t eid, sgx_status_t* retval, sgx_ra_
 	return status;
 }
 
+sgx_status_t rsa_public_key_gen(sgx_enclave_id_t eid, sgx_status_t* retval, sgx_rsa3072_public_key_t* pub_key)
+{
+	sgx_status_t status;
+	ms_rsa_public_key_gen_t ms;
+	ms.ms_pub_key = pub_key;
+	status = sgx_ecall(eid, 4, &ocall_table_isv_enclave, &ms);
+	if (status == SGX_SUCCESS && retval) *retval = ms.ms_retval;
+	return status;
+}
+
+sgx_status_t rsa_verify(sgx_enclave_id_t eid, sgx_status_t* retval, const uint8_t* p_data, uint32_t data_size, sgx_rsa3072_signature_t* p_signature, sgx_rsa_result_t* p_result, const sgx_rsa3072_public_key_t* p_public)
+{
+	sgx_status_t status;
+	ms_rsa_verify_t ms;
+	ms.ms_p_data = p_data;
+	ms.ms_data_size = data_size;
+	ms.ms_p_signature = p_signature;
+	ms.ms_p_result = p_result;
+	ms.ms_p_public = p_public;
+	status = sgx_ecall(eid, 5, &ocall_table_isv_enclave, &ms);
+	if (status == SGX_SUCCESS && retval) *retval = ms.ms_retval;
+	return status;
+}
+
+sgx_status_t rsa_sign(sgx_enclave_id_t eid, sgx_status_t* retval, const uint8_t* p_data, uint32_t data_size, sgx_rsa3072_signature_t* p_signature)
+{
+	sgx_status_t status;
+	ms_rsa_sign_t ms;
+	ms.ms_p_data = p_data;
+	ms.ms_data_size = data_size;
+	ms.ms_p_signature = p_signature;
+	status = sgx_ecall(eid, 6, &ocall_table_isv_enclave, &ms);
+	if (status == SGX_SUCCESS && retval) *retval = ms.ms_retval;
+	return status;
+}
+
 sgx_status_t sgx_ra_get_ga(sgx_enclave_id_t eid, sgx_status_t* retval, sgx_ra_context_t context, sgx_ec256_public_t* g_a)
 {
 	sgx_status_t status;
 	ms_sgx_ra_get_ga_t ms;
 	ms.ms_context = context;
 	ms.ms_g_a = g_a;
-	status = sgx_ecall(eid, 4, &ocall_table_isv_enclave, &ms);
+	status = sgx_ecall(eid, 7, &ocall_table_isv_enclave, &ms);
 	if (status == SGX_SUCCESS && retval) *retval = ms.ms_retval;
 	return status;
 }
@@ -272,7 +329,7 @@ sgx_status_t sgx_ra_proc_msg2_trusted(sgx_enclave_id_t eid, sgx_status_t* retval
 	ms.ms_p_qe_target = p_qe_target;
 	ms.ms_p_report = p_report;
 	ms.ms_p_nonce = p_nonce;
-	status = sgx_ecall(eid, 5, &ocall_table_isv_enclave, &ms);
+	status = sgx_ecall(eid, 8, &ocall_table_isv_enclave, &ms);
 	if (status == SGX_SUCCESS && retval) *retval = ms.ms_retval;
 	return status;
 }
@@ -286,7 +343,7 @@ sgx_status_t sgx_ra_get_msg3_trusted(sgx_enclave_id_t eid, sgx_status_t* retval,
 	ms.ms_qe_report = qe_report;
 	ms.ms_p_msg3 = p_msg3;
 	ms.ms_msg3_size = msg3_size;
-	status = sgx_ecall(eid, 6, &ocall_table_isv_enclave, &ms);
+	status = sgx_ecall(eid, 9, &ocall_table_isv_enclave, &ms);
 	if (status == SGX_SUCCESS && retval) *retval = ms.ms_retval;
 	return status;
 }

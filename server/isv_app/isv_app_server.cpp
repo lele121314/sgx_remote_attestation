@@ -207,7 +207,7 @@ void share_receive()
 {
 	char * str = (char *)controlbuff;
 	while (str[0] == '1') {
-		Sleep(5000);
+		Sleep(1000);
 		printf("wait for client!!!\n");
 	}
 	printf("message received");
@@ -237,7 +237,7 @@ int main(int argc, char* argv[])
     sgx_ra_msg3_t *p_msg3 = NULL;
     ra_samp_response_header_t* p_att_result_msg_full = NULL;
     sgx_enclave_id_t enclave_id = 0;
-//    int enclave_lost_retry_time = 1;
+    int enclave_lost_retry_time = 1;
 //    int busy_retry_time = 4;
     sgx_ra_context_t context = INT_MAX;
     sgx_status_t status = SGX_SUCCESS;
@@ -279,6 +279,60 @@ int main(int argc, char* argv[])
             return -1;
         }
     }
+	{ // creates the cryptserver enclave.
+		uint32_t extended_epid_group_id = 0;
+		ret = sgx_get_extended_epid_group_id(&extended_epid_group_id);
+		
+		if (SGX_SUCCESS != ret)
+		{
+			ret = -1;
+			fprintf(OUTPUT, "\nError, call sgx_get_extended_epid_group_id fail [%s].",
+				__FUNCTION__);
+			return ret;
+		}
+		fprintf(OUTPUT, "\nCall sgx_get_extended_epid_group_id success.");
+
+		int launch_token_update = 0;
+		sgx_launch_token_t launch_token = { 0 };
+		memset(&launch_token, 0, sizeof(sgx_launch_token_t));
+		do
+		{
+			ret = sgx_create_enclave(_T(ENCLAVE_PATH),
+				SGX_DEBUG_FLAG,
+				&launch_token,
+				&launch_token_update,
+				&enclave_id, NULL);
+			if (SGX_SUCCESS != ret)
+			{
+				ret = -1;
+				fprintf(OUTPUT, "\nError, call sgx_create_enclave fail [%s].",
+					__FUNCTION__);
+				
+			}
+			fprintf(OUTPUT, "\nCall sgx_create_enclave success.");
+
+			ret = enclave_init_ra(enclave_id,
+				&status,
+				false,
+				&context);
+			//Ideally, this check would be around the full attestation flow.
+		} while (SGX_ERROR_ENCLAVE_LOST == ret && enclave_lost_retry_time--);
+
+		if (SGX_SUCCESS != ret || status)
+		{
+			ret = -1;
+			fprintf(OUTPUT, "\nError, call enclave_init_ra fail [%s].",
+				__FUNCTION__);
+			
+		}
+		fprintf(OUTPUT, "\nCall enclave_init_ra success.");
+	}
+
+
+
+
+
+
 	// Preparation for receive msg0
 	share_init();
 	share_receive();
@@ -334,6 +388,63 @@ int main(int argc, char* argv[])
 		printf("\nsend msg4 (msg3 response)\n");
        
     }
+	{
+		share_receive();
+		sgx_rsa3072_public_key_t *pub_key;
+	
+		{
+
+			pub_key = (sgx_rsa3072_public_key_t*)malloc(sizeof(sgx_rsa3072_public_key_t));
+			ret = rsa_public_key_gen(enclave_id,
+				&status,
+				pub_key);
+			for (int i = 0; i < 5; i++) {
+				printf("0x%02x\n", *((uint8_t*)pub_key + i));
+			}
+			if ((SGX_SUCCESS != ret))
+			{
+				fprintf(OUTPUT, "\n11111Error, attestation result message secret "
+					"using SK based AESGCM failed in [%s]. ret = "
+					"0x%0x. status = 0x%0x", __FUNCTION__, ret,
+					status);
+				
+			}
+		}
+		
+		share_send((char *)pub_key);
+		share_receive();
+		
+
+		
+		sgx_rsa3072_signature_t *p_signature;
+	
+		{
+			char data[12] = "hello world";
+			p_signature = (sgx_rsa3072_signature_t*)malloc(sizeof(sgx_rsa3072_signature_t));
+			ret = rsa_sign(enclave_id,
+				&status,
+				(uint8_t*)&data,
+				sizeof(char) * 12,
+				p_signature
+			);
+			for (int i = 0; i < 384; i++) {
+			printf("0x%02x\n", *((uint8_t*)p_signature + i));
+			}
+
+			if ((SGX_SUCCESS != ret))
+			{
+				fprintf(OUTPUT, "\n22222Error, attestation result message secret "
+					"using SK based AESGCM failed in [%s]. ret = "
+					"0x%0x. status = 0x%0x", __FUNCTION__, ret,
+					status);
+				
+			}
+		}
+
+		share_send((char *)p_signature);
+
+
+	}
 
 
     // Clean-up

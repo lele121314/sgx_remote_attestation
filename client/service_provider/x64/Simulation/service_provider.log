@@ -4,6 +4,6 @@
   ecp.cpp
   Default key derivation function is used.
   正在生成代码...
-    正在创建库 C:\Users\xl\Desktop\sgx\client\x64\Simulation\service_provider.lib 和对象 C:\Users\xl\Desktop\sgx\client\x64\Simulation\service_provider.exp
-  service_provider.vcxproj -> C:\Users\xl\Desktop\sgx\client\x64\Simulation\service_provider.dll
-  service_provider.vcxproj -> C:\Users\xl\Desktop\sgx\client\x64\Simulation\service_provider.pdb (Full PDB)
+    正在创建库 C:\Users\xl\Desktop\sgx\sgx_remote_attestation\client\x64\Simulation\service_provider.lib 和对象 C:\Users\xl\Desktop\sgx\sgx_remote_attestation\client\x64\Simulation\service_provider.exp
+  service_provider.vcxproj -> C:\Users\xl\Desktop\sgx\sgx_remote_attestation\client\x64\Simulation\service_provider.dll
+  service_provider.vcxproj -> C:\Users\xl\Desktop\sgx\sgx_remote_attestation\client\x64\Simulation\service_provider.pdb (Full PDB)

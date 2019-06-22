@@ -1,2 +1,2 @@
 #TargetFrameworkVersion=v4.5.2:PlatformToolSet=v140:EnableManagedIncrementalBuild=false:VCToolArchitecture=Native32Bit:WindowsTargetPlatformVersion=8.1
-Simulation|x64|C:\Users\xl\Desktop\sgx\client\|
+Simulation|x64|C:\Users\xl\Desktop\sgx\sgx_remote_attestation\client\|
