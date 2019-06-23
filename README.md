@@ -13,4 +13,4 @@
 
 如果无法运行，请看result目录下的gif和server端和client端的log文件
 
-![](.\result\result_run.gif)
+![](result/result_run.gif)
