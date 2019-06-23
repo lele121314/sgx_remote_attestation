@@ -208,10 +208,10 @@ void share_receive()
 {
 	char * str = (char *)controlbuff;
 	while (str[0] == '0') {
-		Sleep(5000);
-		printf("wait for server!!!\n");
+		Sleep(2000);
+		printf("\nwait for server!!!\n");
 	}
-	printf("message received");
+	printf("\nmessage received\n");
 }
 
 void share_destory()
@@ -755,11 +755,27 @@ p_att_result_msg_full->size) )
 		for (int i = 0; i < 5; i++) {
 		printf("0x%02x\n", *((uint8_t*)pub_key + i));
 		}
+		fprintf(OUTPUT, "\n\n*********************receive pub_key ******************************\n\n");
+
+		PRINT_BYTE_ARRAY(OUTPUT, pub_key,
+			(uint32_t)sizeof(sgx_rsa3072_public_key_t));
+		fprintf(OUTPUT, "\n\n*********************receive pub_key end**************************\n\n");
+
+
+
 		share_send((char *)p_msg3_full);
 		share_receive();
 		sgx_rsa3072_signature_t *p_signature;
 		p_signature = (sgx_rsa3072_signature_t*)malloc(sizeof(sgx_rsa3072_signature_t));
 		memcpy(p_signature, buff, sizeof(sgx_rsa3072_signature_t));
+
+
+		fprintf(OUTPUT, "\n\n*********************receive p_signature ******************************\n\n");
+
+		PRINT_BYTE_ARRAY(OUTPUT, p_signature,
+			(uint32_t)sizeof(sgx_rsa3072_signature_t));
+		fprintf(OUTPUT, "\n\n*********************receive p_signature end**************************\n\n");
+
 
 		sgx_rsa_result_t p_result;
 		char data[12] = "hello world";
@@ -771,12 +787,18 @@ p_att_result_msg_full->size) )
 			&p_result,
 			pub_key
 		);
-		if (p_result == SGX_RSA_VALID)fprintf(OUTPUT, "\nRSA GOOD!!!.");
+
+		fprintf(OUTPUT, "\n\n*********************RSA result ******************************\n\n");
+
+		
+		
+		if (p_result == SGX_RSA_VALID)fprintf(OUTPUT, "\nRSA GOOD!!!.\n");
 		else fprintf(OUTPUT, "\n33333Error, attestation result message secret "
 			"using SK based AESGCM failed in [%s]. ret = "
 			"0x%0x. status = 0x%0x", __FUNCTION__, ret,
 			p_result);
-		
+		fprintf(OUTPUT, "\n\n*********************RSA result end**************************\n\n");
+
 	}
 
 CLEANUP:

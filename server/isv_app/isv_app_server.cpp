@@ -208,9 +208,9 @@ void share_receive()
 	char * str = (char *)controlbuff;
 	while (str[0] == '1') {
 		Sleep(1000);
-		printf("wait for client!!!\n");
+		printf("\nwait for client!!!\n");
 	}
-	printf("message received");
+	printf("\nmessage received\n");
 }
 
 void share_destory()
@@ -279,59 +279,7 @@ int main(int argc, char* argv[])
             return -1;
         }
     }
-	{ // creates the cryptserver enclave.
-		uint32_t extended_epid_group_id = 0;
-		ret = sgx_get_extended_epid_group_id(&extended_epid_group_id);
-		
-		if (SGX_SUCCESS != ret)
-		{
-			ret = -1;
-			fprintf(OUTPUT, "\nError, call sgx_get_extended_epid_group_id fail [%s].",
-				__FUNCTION__);
-			return ret;
-		}
-		fprintf(OUTPUT, "\nCall sgx_get_extended_epid_group_id success.");
-
-		int launch_token_update = 0;
-		sgx_launch_token_t launch_token = { 0 };
-		memset(&launch_token, 0, sizeof(sgx_launch_token_t));
-		do
-		{
-			ret = sgx_create_enclave(_T(ENCLAVE_PATH),
-				SGX_DEBUG_FLAG,
-				&launch_token,
-				&launch_token_update,
-				&enclave_id, NULL);
-			if (SGX_SUCCESS != ret)
-			{
-				ret = -1;
-				fprintf(OUTPUT, "\nError, call sgx_create_enclave fail [%s].",
-					__FUNCTION__);
-				
-			}
-			fprintf(OUTPUT, "\nCall sgx_create_enclave success.");
-
-			ret = enclave_init_ra(enclave_id,
-				&status,
-				false,
-				&context);
-			//Ideally, this check would be around the full attestation flow.
-		} while (SGX_ERROR_ENCLAVE_LOST == ret && enclave_lost_retry_time--);
-
-		if (SGX_SUCCESS != ret || status)
-		{
-			ret = -1;
-			fprintf(OUTPUT, "\nError, call enclave_init_ra fail [%s].",
-				__FUNCTION__);
-			
-		}
-		fprintf(OUTPUT, "\nCall enclave_init_ra success.");
-	}
-
-
-
-
-
+	
 
 	// Preparation for receive msg0
 	share_init();
@@ -340,6 +288,15 @@ int main(int argc, char* argv[])
 	p_msg0_resp_full = (ra_samp_response_header_t*)
 		malloc(sizeof(ra_samp_response_header_t)
 			+ sizeof(uint32_t));
+
+	fprintf(OUTPUT, "\n\n*********************receive MSG0******************************\n\n");
+
+	PRINT_BYTE_ARRAY(OUTPUT, p_msg0_full,
+		(uint32_t)sizeof(ra_samp_request_header_t)
+		+ p_msg0_full->size);
+	fprintf(OUTPUT, "\n\n*********************receive MSG0 end**************************\n\n");
+
+
 	ret = ra_network_send_receive("http://SampleServiceProvider.intel.com/",
 		p_msg0_full,
 		&p_msg0_resp_full);
@@ -360,10 +317,71 @@ int main(int argc, char* argv[])
 		p_msg2_full = (ra_samp_response_header_t*)
 			malloc(sizeof(ra_samp_response_header_t)
 				+ sizeof(uint32_t));
+
+		fprintf(OUTPUT, "\n\n*********************receive MSG1******************************\n\n");
+
+		PRINT_BYTE_ARRAY(OUTPUT, p_msg1_full,
+			(uint32_t)sizeof(ra_samp_request_header_t)
+			+ p_msg1_full->size);
+		fprintf(OUTPUT, "\n\n*********************receive MSG1 end**************************\n\n");
+
+
+
+
         ret = ra_network_send_receive("http://SampleServiceProvider.intel.com/",
                                       p_msg1_full,
                                       &p_msg2_full);
 		share_send((char *)p_msg2_full);
+
+		{ // creates the cryptserver enclave.
+			uint32_t extended_epid_group_id = 0;
+			ret = sgx_get_extended_epid_group_id(&extended_epid_group_id);
+
+			if (SGX_SUCCESS != ret)
+			{
+				ret = -1;
+				fprintf(OUTPUT, "\nError, call sgx_get_extended_epid_group_id fail [%s].",
+					__FUNCTION__);
+				return ret;
+			}
+			fprintf(OUTPUT, "\nCall sgx_get_extended_epid_group_id success.");
+
+			int launch_token_update = 0;
+			sgx_launch_token_t launch_token = { 0 };
+			memset(&launch_token, 0, sizeof(sgx_launch_token_t));
+			do
+			{
+				ret = sgx_create_enclave(_T(ENCLAVE_PATH),
+					SGX_DEBUG_FLAG,
+					&launch_token,
+					&launch_token_update,
+					&enclave_id, NULL);
+				if (SGX_SUCCESS != ret)
+				{
+					ret = -1;
+					fprintf(OUTPUT, "\nError, call sgx_create_enclave fail [%s].",
+						__FUNCTION__);
+
+				}
+				fprintf(OUTPUT, "\nCall sgx_create_enclave success.");
+
+				ret = enclave_init_ra(enclave_id,
+					&status,
+					false,
+					&context);
+				//Ideally, this check would be around the full attestation flow.
+			} while (SGX_ERROR_ENCLAVE_LOST == ret && enclave_lost_retry_time--);
+
+			if (SGX_SUCCESS != ret || status)
+			{
+				ret = -1;
+				fprintf(OUTPUT, "\nError, call enclave_init_ra fail [%s].",
+					__FUNCTION__);
+
+			}
+			fprintf(OUTPUT, "\nCall enclave_init_ra success.");
+		}
+
 
 		printf("\nsend msg2 (msg1 response)\n");
 
@@ -378,6 +396,15 @@ int main(int argc, char* argv[])
         // established from the SIGMA secure channel binding.
 		share_receive();
 		p_msg3_full = (ra_samp_request_header_t *)buff;
+
+		fprintf(OUTPUT, "\n\n*********************receive MSG3******************************\n\n");
+
+		PRINT_BYTE_ARRAY(OUTPUT, p_msg3_full,
+			(uint32_t)sizeof(ra_samp_request_header_t)
+			+ p_msg3_full->size);
+		fprintf(OUTPUT, "\n\n*********************receive MSG3 end**************************\n\n");
+
+
 		p_att_result_msg_full = (ra_samp_response_header_t*)
 			malloc(sizeof(ra_samp_response_header_t)
 				+ sizeof(uint32_t));
@@ -398,9 +425,9 @@ int main(int argc, char* argv[])
 			ret = rsa_public_key_gen(enclave_id,
 				&status,
 				pub_key);
-			for (int i = 0; i < 5; i++) {
+			/*for (int i = 0; i < 5; i++) {
 				printf("0x%02x\n", *((uint8_t*)pub_key + i));
-			}
+			}*/
 			if ((SGX_SUCCESS != ret))
 			{
 				fprintf(OUTPUT, "\n11111Error, attestation result message secret "
@@ -427,9 +454,9 @@ int main(int argc, char* argv[])
 				sizeof(char) * 12,
 				p_signature
 			);
-			for (int i = 0; i < 384; i++) {
+		/*	for (int i = 0; i < 384; i++) {
 			printf("0x%02x\n", *((uint8_t*)p_signature + i));
-			}
+			}*/
 
 			if ((SGX_SUCCESS != ret))
 			{
